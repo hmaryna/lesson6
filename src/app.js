@@ -31,3 +31,19 @@ const tasks = [
   }
 ];
 // (function(arrOfTasks) {})(tasks);
+
+const form = document.querySelector("form[name=addTask]");
+const list = document.querySelector(".list-group");
+
+form.addEventListener("submit", addNewTask);
+
+function addNewTask() {
+  const card = document.querySelector(".list-group-item").cloneNode(true);
+
+  card.firstElementChild.textContent = title.value;
+  card.lastElementChild.textContent = body.value;
+  list.append(card);
+
+  event.preventDefault();
+  this.reset();
+}

@@ -18,6 +18,9 @@
     "no-shadow": "off",
     "no-restricted-syntax": "off",
     "comma-dangle": "off",
-    "arrow-parens": "off"
+    "arrow-parens": "off",
+    "wrap-iife": "off",
+    "space-before-function-paren": "off",
+    "operator-linebreak": "off"
   }
 }

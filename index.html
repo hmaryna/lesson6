@@ -11,6 +11,11 @@
       crossorigin="anonymous"
     />
     <title>Todo List</title>
+    <style>
+      .list-group-item[data-task-status="done"] {
+        background: #2cb52c26;
+      }
+    </style>
   </head>
   <body>
     <div class="form-section mt-5">
@@ -27,6 +32,7 @@
                     id="title"
                     class="form-control"
                     placeholder="Task title"
+                    required
                   />
                   <input
                     type="text"
@@ -34,15 +40,12 @@
                     id="body"
                     class="form-control mt-3"
                     placeholder="Task body"
+                    required
                   />
-                  <div class="form-group">
-                    <label for="completed">Completed</label>
-                    <input
-                    type="checkbox"
-                    name="completed"
-                    id="completed"
-                    class="mt-3 mr-2"
-                  />
+                  <div class="form-group"></div>
+                  <div class="custom-control custom-checkbox">
+                    <input type="checkbox" name="completed" class="mt-3 mr-2 custom-control-input" id="completed">
+                    <label class="custom-control-label" for="completed">Completed</label>
                   </div>
                   <button type="submit" class="btn btn-primary mt-4">
                     Add task
@@ -54,20 +57,50 @@
         </div>
       </div>
     </div>
-    <div class="tasks-list-section mt-5">
+    <div class="mt-5">
+      <div class="container">
+        <button type="button" id="showAll" class="btn btn-primary">All</button>
+        <button type="button" id="showCompleted" class="btn btn-primary">Completed</button>
+      </div>
+    </div>
+    <div class="tasks-list-section mb-5">
       <div class="container">
         <ul class="list-group">
-          <li class="list-group-item d-flex align-items-center flex-wrap mt-2">
+          <li data-task-status="inprogress" class="list-group-item d-flex align-items-center flex-wrap mt-2">
             <span>My title</span>
-            <button class="btn btn-danger ml-auto delete-btn">Delete</button>
             <p class="mt-2 w-100">
               Lorem ipsum dolor sit amet consectetur adipisicing elit. Eligendi
               soluta vitae sint tenetur quam quisquam explicabo quos? Aut iste
               ut laborum iure aspernatur, nam ea quibusdam rerum minus magnam
               dignissimos.
             </p>
+            <div class="custom-control custom-checkbox">
+              <input type="checkbox" class="custom-control-input" id="completedTask1">
+              <label class="custom-control-label" for="completedTask1">Completed</label>
+            </div>
+            <button type="button" class="btn btn-danger ml-auto delete-btn" data-toggle="modal" data-target="#exampleModalCenter">Delete</button>
           </li>
         </ul>
+      </div>
+    </div>
+    <!-- Modal -->
+    <div class="modal fade in" id="exampleModalCenter" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle">
+      <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="exampleModalLongTitle">Do you really want to delete this task?</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <p>If you delete this task it will not be posible to restore it.</p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            <button type="button" class="btn btn-danger">Delete Task</button>
+          </div>
+        </div>
       </div>
     </div>
     <script src="./src/app.js"></script>

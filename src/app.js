@@ -31,134 +31,172 @@ const tasks = [
   }
 ];
 
-const form = document.querySelector("form[name=addTask]");
-const list = document.querySelector(".list-group");
-const modal = document.querySelector("#exampleModalCenter");
-const allTasksBtn = document.querySelector("#showAll");
-const completedTasksBtn = document.querySelector("#showCompleted");
+(function() {
+  const form = document.forms.addTask;
+  const list = document.querySelector(".list-group");
+  const modal = document.querySelector("#exampleModalCenter");
+  const allTasksBtn = document.querySelector("#showAll");
+  const completedTasksBtn = document.querySelector("#showCompleted");
 
-const cardTemplate = function(title, description, status) {
-  const card = document.querySelector(".list-group-item").cloneNode(true);
-  const checkbox = card.querySelector("input[type=checkbox]");
-  const label = card.querySelector("label");
-  let idCounter = list.children.length;
+  function toogleEmptyList() {
+    const list = document.querySelector(".list-group");
 
-  card.querySelector("span").textContent = title;
-  card.querySelector("p").textContent = description;
+    if (list.children.length === 0) {
+      list.insertAdjacentHTML(
+        "beforeend",
+        '<div class="alert alert-warning mt-2 d-flex flex-wrap" role="alert">List with tasks is empty now. Please, add new task.</div>'
+      );
+    } else if (list.contains(document.querySelector(".alert"))) {
+      document.querySelector(".alert").remove();
+    }
+  }
 
-  checkbox.checked = status;
-  card.dataset.taskStatus = checkbox.checked === true ? "done" : "inprogress";
+  function generateId() {
+    // desired length of Id
+    const idStrLen = 25;
 
-  const createId = function(value) {
-    const id = checkbox.id.replace(/\d+/, `${value + 1}`);
+    // always start with a letter -- base 36 makes for a nice shortcut
+    let idStr = (Math.floor(Math.random() * 25) + 10).toString(36);
 
-    return id;
+    // similar to above, complete the Id using random, alphanumeric characters
+    do {
+      idStr += Math.floor(Math.random() * 35).toString(36);
+    } while (idStr.length < idStrLen);
+
+    return idStr;
+  }
+
+  function changeTaskStatus(event) {
+    const task = event.target.closest(".list-group-item");
+
+    if (event.target.checked === true) {
+      task.dataset.taskStatus = "done";
+    } else {
+      task.dataset.taskStatus = "inprogress";
+    }
+  }
+
+  function deleteTask(event) {
+    console.log(this);
+    const listItem = event.target.parentElement;
+
+    modal.classList.add("show");
+    modal.style.display = "block";
+
+    document.body.classList.add("modal-open");
+    document.body.style.paddingRight = "17px";
+    document.body.insertAdjacentHTML(
+      "beforeend",
+      '<div class="modal-backdrop fade show"></div>'
+    );
+
+    const backdrop = document.querySelector(".modal-backdrop");
+
+    function closeModal() {
+      modal.classList.remove("show");
+      modal.style.display = "none";
+
+      document.body.classList.remove("modal-open");
+      document.body.style.paddingRight = "";
+
+      backdrop.remove();
+    }
+
+    function removeTask() {
+      closeModal();
+      listItem.remove();
+      toogleEmptyList();
+    }
+
+    modal.querySelector(".close").addEventListener("click", closeModal);
+    modal.querySelector(".btn-secondary").addEventListener("click", closeModal);
+    modal.querySelector(".btn-danger").addEventListener("click", removeTask);
+    // modal.addEventListener("keyup", event => {
+    //   // Number 13 is the "Enter" key on the keyboard
+    //   if (event.keyCode === 13) {
+    //     // Cancel the default action, if needed
+    //     event.preventDefault();
+    //     // Trigger the button element with a click
+    //   }
+    //   removeTask();
+    // });
+  }
+
+  const cardTemplate = function(title, description, status, id = generateId()) {
+    const card = document.createElement("li");
+
+    card.classList.add(
+      "list-group-item",
+      "d-flex",
+      "align-items-center",
+      "flex-wrap",
+      "mt-2"
+    );
+    card.innerHTML =
+      '<span></span><p class="mt-2 w-100"></p><div class="custom-control custom-checkbox"><input type="checkbox" class="custom-control-input"><label class="custom-control-label">Completed</label></div><button type="button" class="btn btn-danger ml-auto delete-btn" data-toggle="modal" data-target="#exampleModalCenter">Delete</button>';
+
+    card.querySelector("span").textContent = title;
+    card.querySelector("p").textContent = description;
+    card.querySelector("input[type=checkbox]").checked = status;
+    card.querySelector("input[type=checkbox]").id = id;
+    card.querySelector("label").setAttribute("for", `${id}`);
+
+    card.dataset.taskStatus = status === true ? "done" : "inprogress";
+
+    card.querySelector(".delete-btn").addEventListener("click", deleteTask);
+    card
+      .querySelector("input[type=checkbox]")
+      .addEventListener("input", changeTaskStatus);
+
+    return card;
   };
 
-  checkbox.id = createId(idCounter);
-  label.setAttribute("for", createId(idCounter));
+  (function(obj) {
+    obj.forEach(el => {
+      const card = cardTemplate(
+        el["title"],
+        el["body"],
+        el["completed"],
+        el["_id"]
+      );
 
-  idCounter++;
+      list.append(card);
+    });
+  })(tasks);
 
-  return card;
-};
+  function addNewTask(event) {
+    const card = cardTemplate(
+      this.title.value,
+      this.body.value,
+      this.progress.checked
+    );
 
-(function(obj) {
-  obj.forEach(el => {
-    const card = cardTemplate(el.title, el.body, el.completed);
-    list.append(card);
-  });
-})(tasks);
-
-function addNewTask(event) {
-  const card = cardTemplate(
-    document.querySelector("#title").value,
-    document.querySelector("#body").value,
-    document.querySelector("#completed").checked
-  );
-
-  list.append(card);
-  event.preventDefault();
-  event.target.reset();
-}
-
-function changeTaskBackground(event) {
-  const cardCheckbox =
-    event.target.type === "checkbox" &&
-    event.target.closest(".list-group-item");
-
-  if (!cardCheckbox) return;
-
-  const task = event.target.closest(".list-group-item");
-
-  if (event.target.checked === true) {
-    task.dataset.taskStatus = "done";
-  } else {
-    task.dataset.taskStatus = "inprogress";
-  }
-}
-
-function deleteTask(event) {
-  const cardBtn = event.target.classList.contains("delete-btn");
-
-  if (!cardBtn) return;
-
-  const listItem = event.target.parentElement;
-
-  modal.classList.add("show");
-  modal.style.display = "block";
-
-  document.body.classList.add("modal-open");
-  document.body.style.paddingRight = "17px";
-  document.body.insertAdjacentHTML(
-    "beforeend",
-    '<div class="modal-backdrop fade show"></div>'
-  );
-
-  const backdrop = document.querySelector(".modal-backdrop");
-
-  function closeModal() {
-    modal.classList.remove("show");
-    modal.style.display = "none";
-
-    document.body.classList.remove("modal-open");
-    document.body.style.paddingRight = "";
-
-    backdrop.remove();
+    list.prepend(card);
+    event.preventDefault();
+    this.reset();
+    toogleEmptyList();
   }
 
-  function removeTask() {
-    closeModal();
-    listItem.remove();
+  function toogleTasks(event) {
+    const listElements = document.querySelectorAll(".list-group-item");
+    const completedTask = event.target.contains(completedTasksBtn);
+
+    listElements.forEach(li => {
+      if (
+        completedTask &&
+        li.querySelector("input[type=checkbox]").checked === false
+      ) {
+        li.classList.remove("d-flex");
+        li.classList.add("d-none");
+      } else {
+        li.classList.remove("d-none");
+        li.classList.add("d-flex");
+      }
+    });
   }
 
-  modal.querySelector(".close").addEventListener("click", closeModal);
-  modal.querySelector(".btn-secondary").addEventListener("click", closeModal);
-  modal.querySelector(".btn-danger").addEventListener("click", removeTask);
-}
+  form.addEventListener("submit", addNewTask);
 
-function toogleTask(event) {
-  const listElements = document.querySelectorAll(".list-group-item");
-  const completedTask = event.target.contains(completedTasksBtn);
-
-  listElements.forEach(li => {
-    if (
-      completedTask &&
-      li.querySelector("input[type=checkbox]").checked === false
-    ) {
-      li.classList.remove("d-flex");
-      li.classList.add("d-none");
-    } else {
-      li.classList.remove("d-none");
-      li.classList.add("d-flex");
-    }
-  });
-}
-
-form.addEventListener("submit", addNewTask);
-
-document.addEventListener("click", deleteTask);
-document.addEventListener("input", changeTaskBackground);
-
-allTasksBtn.addEventListener("click", toogleTask);
-completedTasksBtn.addEventListener("click", toogleTask);
+  allTasksBtn.addEventListener("click", toogleTasks);
+  completedTasksBtn.addEventListener("click", toogleTasks);
+})();

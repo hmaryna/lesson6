@@ -21,6 +21,7 @@
     "arrow-parens": "off",
     "wrap-iife": "off",
     "space-before-function-paren": "off",
-    "operator-linebreak": "off"
+    "operator-linebreak": "off",
+    "dot-notation": "off"
   }
 }

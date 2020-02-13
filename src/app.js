@@ -81,29 +81,33 @@ const tasks = [
     const closeModalBtn = modal.querySelector(".close");
     const cancelBtn = modal.querySelector(".btn-secondary");
     const deleteBtn = modal.querySelector(".btn-danger");
+    
+    // modal-open
 
-    modal.classList.add("show");
-    modal.style.display = "block";
+    // modal.classList.add("show");
+    // modal.style.display = "block";
 
-    document.body.classList.add("modal-open");
-    document.body.style.paddingRight = "17px";
-    document.body.insertAdjacentHTML(
-      "beforeend",
-      '<div class="modal-backdrop fade show"></div>'
-    );
+    // document.body.classList.add("modal-open");
+    // document.body.style.paddingRight = "17px";
+    // document.body.insertAdjacentHTML(
+    //   "beforeend",
+    //   '<div class="modal-backdrop fade show"></div>'
+    // );
 
     cancelBtn.focus();
 
-    const backdrop = document.querySelector(".modal-backdrop");
+    console.log('open')
+
+    // const backdrop = document.querySelector(".modal-backdrop");
 
     function closeModal() {
-      modal.classList.remove("show");
-      modal.style.display = "none";
+      // modal.classList.remove("show");
+      // modal.style.display = "none";
 
-      document.body.classList.remove("modal-open");
-      document.body.style.paddingRight = "";
+      // document.body.classList.remove("modal-open");
+      // document.body.style.paddingRight = "";
 
-      backdrop.remove();
+      // backdrop.remove();
     }
 
     function removeTask() {
@@ -225,10 +229,15 @@ const tasks = [
         li.classList.add("d-flex");
       }
     });
+
+    // filter + "empty message"
   }
 
   form.addEventListener("submit", addNewTask);
 
   allTasksBtn.addEventListener("click", toogleTasks);
   completedTasksBtn.addEventListener("click", toogleTasks);
+
+  // init tasks from array
+
 })();

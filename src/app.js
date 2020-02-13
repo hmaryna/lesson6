@@ -77,8 +77,10 @@ const tasks = [
   }
 
   function deleteTask(event) {
-    console.log(this);
     const listItem = event.target.parentElement;
+    const closeModalBtn = modal.querySelector(".close");
+    const cancelBtn = modal.querySelector(".btn-secondary");
+    const deleteBtn = modal.querySelector(".btn-danger");
 
     modal.classList.add("show");
     modal.style.display = "block";
@@ -89,6 +91,8 @@ const tasks = [
       "beforeend",
       '<div class="modal-backdrop fade show"></div>'
     );
+
+    cancelBtn.focus();
 
     const backdrop = document.querySelector(".modal-backdrop");
 
@@ -108,18 +112,46 @@ const tasks = [
       toogleEmptyList();
     }
 
-    modal.querySelector(".close").addEventListener("click", closeModal);
-    modal.querySelector(".btn-secondary").addEventListener("click", closeModal);
-    modal.querySelector(".btn-danger").addEventListener("click", removeTask);
-    // modal.addEventListener("keyup", event => {
-    //   // Number 13 is the "Enter" key on the keyboard
-    //   if (event.keyCode === 13) {
-    //     // Cancel the default action, if needed
-    //     event.preventDefault();
-    //     // Trigger the button element with a click
-    //   }
-    //   removeTask();
-    // });
+    function moduleKeyController(event) {
+      if (event.target.contains(cancelBtn)) {
+        switch (event.keyCode) {
+          case 9:
+            event.preventDefault();
+            break;
+          case 13:
+          case 27:
+            closeModal();
+            break;
+          case 39:
+            deleteBtn.focus();
+            break;
+          default:
+        }
+      }
+      if (event.target.contains(deleteBtn)) {
+        switch (event.keyCode) {
+          case 9:
+            event.preventDefault();
+            break;
+          case 13:
+            removeTask();
+            break;
+          case 27:
+            closeModal();
+            break;
+          case 37:
+            cancelBtn.focus();
+            break;
+          default:
+        }
+      }
+    }
+
+    closeModalBtn.addEventListener("click", closeModal);
+    cancelBtn.addEventListener("click", closeModal);
+    deleteBtn.addEventListener("click", removeTask);
+    cancelBtn.addEventListener("keydown", moduleKeyController);
+    deleteBtn.addEventListener("keydown", moduleKeyController);
   }
 
   const cardTemplate = function(title, description, status, id = generateId()) {

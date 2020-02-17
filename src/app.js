@@ -41,7 +41,7 @@ let tasks = JSON.parse(localStorage.getItem("tasks")) || [
   const allTasksBtn = document.querySelector("#showAll");
   const completedTasksBtn = document.querySelector("#showCompleted");
 
-  function updateTasks(tasks) {
+  function updateStorage(tasks) {
     const updatedTasks = tasks;
     localStorage.setItem("tasks", JSON.stringify(updatedTasks));
   }
@@ -137,7 +137,7 @@ let tasks = JSON.parse(localStorage.getItem("tasks")) || [
     tasks.unshift(newTask);
     list.prepend(card);
 
-    updateTasks(tasks);
+    updateStorage(tasks);
 
     event.preventDefault();
     this.reset();
@@ -179,7 +179,7 @@ let tasks = JSON.parse(localStorage.getItem("tasks")) || [
       el => el["_id"] !== delCard.querySelector("input[type=checkbox]").id
     );
 
-    updateTasks(tasks);
+    updateStorage(tasks);
   }
 
   function moduleKeyController(event) {

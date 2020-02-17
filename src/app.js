@@ -1,4 +1,4 @@
-const tasks = [
+let tasks = JSON.parse(localStorage.getItem("tasks")) || [
   {
     _id: "5d2ca9e2e03d40b326596aa7",
     completed: true,
@@ -35,8 +35,16 @@ const tasks = [
   const form = document.forms.addTask;
   const list = document.querySelector(".list-group");
   const modal = document.querySelector("#exampleModalCenter");
+  const closeBtnModal = modal.querySelector(".close");
+  const cancelBtnModal = modal.querySelector(".btn-secondary");
+  const deleteBtnModal = modal.querySelector(".btn-danger");
   const allTasksBtn = document.querySelector("#showAll");
   const completedTasksBtn = document.querySelector("#showCompleted");
+
+  function updateTasks(tasks) {
+    const updatedTasks = tasks;
+    localStorage.setItem("tasks", JSON.stringify(updatedTasks));
+  }
 
   function toogleEmptyList() {
     const list = document.querySelector(".list-group");
@@ -50,6 +58,56 @@ const tasks = [
       document.querySelector(".alert").remove();
     }
   }
+
+  function changeTaskStatus(event) {
+    const task = event.target.closest(".list-group-item");
+
+    if (event.target.checked === true) {
+      task.dataset.taskStatus = "done";
+    } else {
+      task.dataset.taskStatus = "inprogress";
+    }
+  }
+
+  const cardTemplate = function(obj) {
+    const card = document.createElement("li");
+
+    card.classList.add(
+      "list-group-item",
+      "d-flex",
+      "align-items-center",
+      "flex-wrap",
+      "mt-2"
+    );
+
+    card.innerHTML = `
+      <span>${obj.title}</span>
+      <p class="mt-2 w-100">${obj.body}</p>
+      <div class="custom-control custom-checkbox">
+        <input
+        type="checkbox"
+        class="custom-control-input"
+        id="${obj["_id"]}"
+        />
+        <label class="custom-control-label" for="${obj["_id"]}">Completed</label>
+      </div>
+      <button type="button" class="btn btn-danger ml-auto delete-btn" data-toggle="modal" data-target="#exampleModalCenter">Delete</button>
+    `;
+
+    card.querySelector("input[type=checkbox]").checked = obj.completed;
+    card.dataset.taskStatus = obj.completed === true ? "done" : "inprogress";
+
+    card.querySelector(".delete-btn").addEventListener("click", () => {
+      card.setAttribute("data-delete", "");
+      setTimeout(() => cancelBtnModal.focus(), 500);
+    });
+
+    card
+      .querySelector("input[type=checkbox]")
+      .addEventListener("input", changeTaskStatus);
+
+    return card;
+  };
 
   function generateId() {
     // desired length of Id
@@ -66,148 +124,21 @@ const tasks = [
     return idStr;
   }
 
-  function changeTaskStatus(event) {
-    const task = event.target.closest(".list-group-item");
-
-    if (event.target.checked === true) {
-      task.dataset.taskStatus = "done";
-    } else {
-      task.dataset.taskStatus = "inprogress";
-    }
-  }
-
-  function deleteTask(event) {
-    const listItem = event.target.parentElement;
-    const closeModalBtn = modal.querySelector(".close");
-    const cancelBtn = modal.querySelector(".btn-secondary");
-    const deleteBtn = modal.querySelector(".btn-danger");
-    
-    // modal-open
-
-    // modal.classList.add("show");
-    // modal.style.display = "block";
-
-    // document.body.classList.add("modal-open");
-    // document.body.style.paddingRight = "17px";
-    // document.body.insertAdjacentHTML(
-    //   "beforeend",
-    //   '<div class="modal-backdrop fade show"></div>'
-    // );
-
-    cancelBtn.focus();
-
-    console.log('open')
-
-    // const backdrop = document.querySelector(".modal-backdrop");
-
-    function closeModal() {
-      // modal.classList.remove("show");
-      // modal.style.display = "none";
-
-      // document.body.classList.remove("modal-open");
-      // document.body.style.paddingRight = "";
-
-      // backdrop.remove();
-    }
-
-    function removeTask() {
-      closeModal();
-      listItem.remove();
-      toogleEmptyList();
-    }
-
-    function moduleKeyController(event) {
-      if (event.target.contains(cancelBtn)) {
-        switch (event.keyCode) {
-          case 9:
-            event.preventDefault();
-            break;
-          case 13:
-          case 27:
-            closeModal();
-            break;
-          case 39:
-            deleteBtn.focus();
-            break;
-          default:
-        }
-      }
-      if (event.target.contains(deleteBtn)) {
-        switch (event.keyCode) {
-          case 9:
-            event.preventDefault();
-            break;
-          case 13:
-            removeTask();
-            break;
-          case 27:
-            closeModal();
-            break;
-          case 37:
-            cancelBtn.focus();
-            break;
-          default:
-        }
-      }
-    }
-
-    closeModalBtn.addEventListener("click", closeModal);
-    cancelBtn.addEventListener("click", closeModal);
-    deleteBtn.addEventListener("click", removeTask);
-    cancelBtn.addEventListener("keydown", moduleKeyController);
-    deleteBtn.addEventListener("keydown", moduleKeyController);
-  }
-
-  const cardTemplate = function(title, description, status, id = generateId()) {
-    const card = document.createElement("li");
-
-    card.classList.add(
-      "list-group-item",
-      "d-flex",
-      "align-items-center",
-      "flex-wrap",
-      "mt-2"
-    );
-    card.innerHTML =
-      '<span></span><p class="mt-2 w-100"></p><div class="custom-control custom-checkbox"><input type="checkbox" class="custom-control-input"><label class="custom-control-label">Completed</label></div><button type="button" class="btn btn-danger ml-auto delete-btn" data-toggle="modal" data-target="#exampleModalCenter">Delete</button>';
-
-    card.querySelector("span").textContent = title;
-    card.querySelector("p").textContent = description;
-    card.querySelector("input[type=checkbox]").checked = status;
-    card.querySelector("input[type=checkbox]").id = id;
-    card.querySelector("label").setAttribute("for", `${id}`);
-
-    card.dataset.taskStatus = status === true ? "done" : "inprogress";
-
-    card.querySelector(".delete-btn").addEventListener("click", deleteTask);
-    card
-      .querySelector("input[type=checkbox]")
-      .addEventListener("input", changeTaskStatus);
-
-    return card;
-  };
-
-  (function(obj) {
-    obj.forEach(el => {
-      const card = cardTemplate(
-        el["title"],
-        el["body"],
-        el["completed"],
-        el["_id"]
-      );
-
-      list.append(card);
-    });
-  })(tasks);
-
   function addNewTask(event) {
-    const card = cardTemplate(
-      this.title.value,
-      this.body.value,
-      this.progress.checked
-    );
+    const newTask = {
+      _id: generateId(),
+      title: this.title.value,
+      body: this.body.value,
+      completed: this.progress.checked
+    };
 
+    const card = cardTemplate(newTask);
+
+    tasks.unshift(newTask);
     list.prepend(card);
+
+    updateTasks(tasks);
+
     event.preventDefault();
     this.reset();
     toogleEmptyList();
@@ -233,11 +164,64 @@ const tasks = [
     // filter + "empty message"
   }
 
+  function cancelDeleteTask() {
+    const delCard = document.querySelector("li[data-delete]");
+    delCard.removeAttribute("data-delete");
+  }
+
+  function deleteTask() {
+    const delCard = document.querySelector("li[data-delete]");
+
+    delCard.remove();
+    toogleEmptyList();
+
+    tasks = tasks.filter(
+      el => el["_id"] !== delCard.querySelector("input[type=checkbox]").id
+    );
+
+    updateTasks(tasks);
+  }
+
+  function moduleKeyController(event) {
+    if (event.target.contains(cancelBtnModal)) {
+      switch (event.keyCode) {
+        case 9:
+          event.preventDefault();
+          break;
+        case 39:
+          deleteBtnModal.focus();
+          break;
+        default:
+      }
+    }
+    if (event.target.contains(deleteBtnModal)) {
+      switch (event.keyCode) {
+        case 9:
+          event.preventDefault();
+          break;
+        case 37:
+          cancelBtnModal.focus();
+          break;
+        default:
+      }
+    }
+  }
+
   form.addEventListener("submit", addNewTask);
 
   allTasksBtn.addEventListener("click", toogleTasks);
   completedTasksBtn.addEventListener("click", toogleTasks);
 
-  // init tasks from array
+  closeBtnModal.addEventListener("click", cancelDeleteTask);
+  cancelBtnModal.addEventListener("click", cancelDeleteTask);
+  deleteBtnModal.addEventListener("click", deleteTask);
 
+  cancelBtnModal.addEventListener("keydown", moduleKeyController);
+  deleteBtnModal.addEventListener("keydown", moduleKeyController);
+
+  // init tasks from array
+  tasks.forEach(el => {
+    const card = cardTemplate(el);
+    list.append(card);
+  });
 })();

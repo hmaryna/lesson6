@@ -16,9 +16,12 @@
       .list-group-item[data-task-status="done"] {
         background: #2cb52c26;
       }
+      body[data-sort="completed"] .list-group-item[data-task-status="inprogress"] {
+        display: none!important;
+      }
     </style>
   </head>
-  <body>
+  <body data-sort="all">
     <div class="form-section mt-5">
       <div class="container">
         <div class="row">
@@ -64,6 +67,7 @@
         <button type="button" id="showCompleted" class="btn btn-primary">Completed</button>
         <ul class="list-group">
         </ul>
+        <div class="alert alert-warning mt-2 empty-list-aler" role="alert" style="display: none">List with tasks is empty now. Please, add new task.</div>
       </div>
     </div>
     <!-- Modal -->

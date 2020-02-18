@@ -40,22 +40,18 @@ let tasks = JSON.parse(localStorage.getItem("tasks")) || [
   const deleteBtnModal = modal.querySelector(".btn-danger");
   const allTasksBtn = document.querySelector("#showAll");
   const completedTasksBtn = document.querySelector("#showCompleted");
+  const emptyListAlert = document.querySelector(".empty-list-aler");
 
   function updateStorage(tasks) {
     const updatedTasks = tasks;
     localStorage.setItem("tasks", JSON.stringify(updatedTasks));
   }
 
-  function toogleEmptyList() {
-    const list = document.querySelector(".list-group");
-
-    if (list.children.length === 0) {
-      list.insertAdjacentHTML(
-        "beforeend",
-        '<div class="alert alert-warning mt-2 d-flex flex-wrap" role="alert">List with tasks is empty now. Please, add new task.</div>'
-      );
-    } else if (list.contains(document.querySelector(".alert"))) {
-      document.querySelector(".alert").remove();
+  function checkTasksLength() {
+    if (tasks.length === 0) {
+      emptyListAlert.style.display = "block";
+    } else {
+      emptyListAlert.style.display = "none";
     }
   }
 
@@ -138,30 +134,18 @@ let tasks = JSON.parse(localStorage.getItem("tasks")) || [
     list.prepend(card);
 
     updateStorage(tasks);
+    checkTasksLength();
 
     event.preventDefault();
     this.reset();
-    toogleEmptyList();
   }
 
-  function toogleTasks(event) {
-    const listElements = document.querySelectorAll(".list-group-item");
-    const completedTask = event.target.contains(completedTasksBtn);
-
-    listElements.forEach(li => {
-      if (
-        completedTask &&
-        li.querySelector("input[type=checkbox]").checked === false
-      ) {
-        li.classList.remove("d-flex");
-        li.classList.add("d-none");
-      } else {
-        li.classList.remove("d-none");
-        li.classList.add("d-flex");
-      }
-    });
-
-    // filter + "empty message"
+  function filterTasks(event) {
+    if (event.target.contains(completedTasksBtn)) {
+      document.body.setAttribute("data-sort", "completed");
+    } else if (event.target.contains(allTasksBtn)) {
+      document.body.setAttribute("data-sort", "all");
+    }
   }
 
   function cancelDeleteTask() {
@@ -173,13 +157,13 @@ let tasks = JSON.parse(localStorage.getItem("tasks")) || [
     const delCard = document.querySelector("li[data-delete]");
 
     delCard.remove();
-    toogleEmptyList();
 
     tasks = tasks.filter(
       el => el["_id"] !== delCard.querySelector("input[type=checkbox]").id
     );
 
     updateStorage(tasks);
+    checkTasksLength();
   }
 
   function moduleKeyController(event) {
@@ -209,8 +193,8 @@ let tasks = JSON.parse(localStorage.getItem("tasks")) || [
 
   form.addEventListener("submit", addNewTask);
 
-  allTasksBtn.addEventListener("click", toogleTasks);
-  completedTasksBtn.addEventListener("click", toogleTasks);
+  allTasksBtn.addEventListener("click", filterTasks);
+  completedTasksBtn.addEventListener("click", filterTasks);
 
   closeBtnModal.addEventListener("click", cancelDeleteTask);
   cancelBtnModal.addEventListener("click", cancelDeleteTask);

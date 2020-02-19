@@ -32,27 +32,142 @@ let tasks = JSON.parse(localStorage.getItem("tasks")) || [
 ];
 
 (function() {
-  const form = document.forms.addTask;
-  const list = document.querySelector(".list-group");
-  const modal = document.querySelector("#exampleModalCenter");
-  const closeBtnModal = modal.querySelector(".close");
-  const cancelBtnModal = modal.querySelector(".btn-secondary");
-  const deleteBtnModal = modal.querySelector(".btn-danger");
+  const taskList = document.querySelector(".list-group");
+  const notificationList = document.querySelector(".notify-wrapper");
+
+  const modalDelete = document.querySelector("#modalDelete");
+  const formDelete = document.forms.addTask;
+  const closeBtnModal = modalDelete.querySelector(".close");
+  const cancelDeleteBtn = modalDelete.querySelector(".btn-secondary");
+  const deleteBtnModal = modalDelete.querySelector(".btn-danger");
+
+  const modalEdit = document.querySelector("#modalEdit");
+  const formEdit = document.forms.editTask;
+
   const allTasksBtn = document.querySelector("#showAll");
   const completedTasksBtn = document.querySelector("#showCompleted");
+
   const emptyListAlert = document.querySelector(".empty-list-aler");
 
-  function updateStorage(tasks) {
-    const updatedTasks = tasks;
-    localStorage.setItem("tasks", JSON.stringify(updatedTasks));
+  function updateStorage(name, value) {
+    localStorage.setItem(`${name}`, JSON.stringify(value));
   }
 
-  function checkTasksLength() {
+  function moduleKeyController(event) {
+    if (event.target.contains(cancelDeleteBtn)) {
+      switch (event.keyCode) {
+        case 9:
+          event.preventDefault();
+          break;
+        case 39:
+          deleteBtnModal.focus();
+          break;
+        default:
+      }
+    }
+    if (event.target.contains(deleteBtnModal)) {
+      switch (event.keyCode) {
+        case 9:
+          event.preventDefault();
+          break;
+        case 37:
+          cancelDeleteBtn.focus();
+          break;
+        default:
+      }
+    }
+  }
+
+  function generateId() {
+    // desired length of Id
+    const idStrLen = 25;
+
+    // always start with a letter -- base 36 makes for a nice shortcut
+    let idStr = (Math.floor(Math.random() * 25) + 10).toString(36);
+
+    // similar to above, complete the Id using random, alphanumeric characters
+    do {
+      idStr += Math.floor(Math.random() * 35).toString(36);
+    } while (idStr.length < idStrLen);
+
+    return idStr;
+  }
+
+  function createNotification(response, title) {
+    const notification = document.createElement("div");
+
+    notification.setAttribute("role", "alert");
+    notification.classList.add(
+      "alert",
+      "alert-success",
+      "alert-dismissible",
+      "animated",
+      "fadeInDown",
+      "notify"
+    );
+
+    notification.innerHTML = `
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+        <span aria-hidden="true">&times;</span>
+      </button>
+      ${
+  response === "add"
+    ? `The task <strong>"${title}"</strong> has been successfully added!`
+    : response === "delete"
+      ? `The task <strong>"${title}"</strong> has been successfully deleted!`
+      : response === "edit"
+        ? `The task <strong>"${title}"</strong> has been successfully edited!`
+        : "none"
+  }
+    `;
+
+    notificationList.prepend(notification);
+
+    setTimeout(() => {
+      notification.classList.toggle("fadeOut");
+      setTimeout(() => {
+        notification.remove();
+      }, 1000);
+    }, 5000);
+  }
+
+  function toogleEmptyNotification() {
     if (tasks.length === 0) {
       emptyListAlert.style.display = "block";
     } else {
       emptyListAlert.style.display = "none";
     }
+
+    const { sort } = document.body.dataset;
+
+    switch (sort) {
+      case "completed":
+        if (tasks.every(task => task.completed === false)) {
+          console.log(tasks);
+          console.log(tasks.every(task => task.completed === false));
+          emptyListAlert.style.display = "block";
+        } else {
+          emptyListAlert.style.display = "none";
+        }
+        break;
+      case "all":
+        break;
+      default:
+        break;
+    }
+
+    updateStorage("emptyListVisibility", emptyListAlert.style.display);
+  }
+
+  function filterTasks(event) {
+    if (event.target.contains(completedTasksBtn)) {
+      document.body.setAttribute("data-sort", "completed");
+    } else if (event.target.contains(allTasksBtn)) {
+      document.body.setAttribute("data-sort", "all");
+    }
+
+    updateStorage("sortStatus", document.body.dataset.sort);
+    toogleEmptyNotification();
   }
 
   function changeTaskStatus(event) {
@@ -63,6 +178,103 @@ let tasks = JSON.parse(localStorage.getItem("tasks")) || [
     } else {
       task.dataset.taskStatus = "inprogress";
     }
+  }
+
+  function toogleTaskAction(event) {
+    const card =
+      document.querySelector("li[data-edit]") ||
+      document.querySelector("li[data-delete]");
+
+    switch (event.target.closest(".modal")) {
+      case event.target.closest("#modalDelete"):
+        card.removeAttribute("data-delete");
+        break;
+      case event.target.closest("#modalEdit"):
+        card.removeAttribute("data-edit");
+        break;
+      default:
+        break;
+    }
+  }
+
+  function editTask(event) {
+    event.preventDefault();
+
+    const editCard = document.querySelector("li[data-edit]");
+    const newInfo = {
+      _id: editCard.querySelector("input[type=checkbox]").id,
+      completed: this.progress.checked,
+      title: this.title.value,
+      body: this.body.value
+    };
+
+    editCard.querySelector("span").textContent = newInfo.title;
+    editCard.querySelector("p").textContent = newInfo.body;
+    editCard.querySelector("input[type=checkbox]").checked = newInfo.completed;
+
+    editCard.dataset.taskStatus =
+      newInfo.completed === true ? "done" : "inprogress";
+
+    editCard.removeAttribute("data-edit");
+
+    tasks.forEach(el => {
+      if (el["_id"] === newInfo["_id"]) {
+        for (const key of Object.keys(el)) {
+          el[key] = newInfo[key];
+        }
+      }
+    });
+
+    $("#simulateClick").trigger("click");
+    updateStorage("tasks", tasks);
+    createNotification("edit", this.title.value);
+
+    event.target.reset();
+  }
+
+  function sendTaskInfo() {
+    const editCard = document.querySelector("li[data-edit]");
+
+    formEdit.title.value = editCard.querySelector("span").textContent;
+    formEdit.body.value = editCard.querySelector("p").textContent;
+    formEdit.progress.checked = editCard.querySelector(
+      "input[type=checkbox]"
+    ).checked;
+  }
+
+  function addNewTask(event) {
+    const newTask = {
+      _id: generateId(),
+      completed: this.progress.checked,
+      title: this.title.value,
+      body: this.body.value
+    };
+
+    const card = cardTemplate(newTask);
+
+    tasks.unshift(newTask);
+    taskList.prepend(card);
+
+    updateStorage("tasks", tasks);
+    toogleEmptyNotification();
+    createNotification("add", this.title.value);
+
+    event.preventDefault();
+    this.reset();
+  }
+
+  function deleteTask() {
+    const delCard = document.querySelector("li[data-delete]");
+
+    delCard.remove();
+
+    tasks = tasks.filter(
+      el => el["_id"] !== delCard.querySelector("input[type=checkbox]").id
+    );
+
+    updateStorage("tasks", tasks);
+    toogleEmptyNotification();
+    createNotification("delete", delCard.querySelector("span").textContent);
   }
 
   const cardTemplate = function(obj) {
@@ -87,7 +299,10 @@ let tasks = JSON.parse(localStorage.getItem("tasks")) || [
         />
         <label class="custom-control-label" for="${obj["_id"]}">Completed</label>
       </div>
-      <button type="button" class="btn btn-danger ml-auto delete-btn" data-toggle="modal" data-target="#exampleModalCenter">Delete</button>
+      <div class="ml-auto">
+      <button type="button" class="btn btn-secondary edit-btn" data-toggle="modal" data-target="#modalEdit">Edit</button>
+      <button type="button" class="btn btn-danger delete-btn" data-toggle="modal" data-target="#modalDelete">Delete</button>
+      </div>
     `;
 
     card.querySelector("input[type=checkbox]").checked = obj.completed;
@@ -95,117 +310,74 @@ let tasks = JSON.parse(localStorage.getItem("tasks")) || [
 
     card.querySelector(".delete-btn").addEventListener("click", () => {
       card.setAttribute("data-delete", "");
-      setTimeout(() => cancelBtnModal.focus(), 500);
+      setTimeout(() => cancelDeleteBtn.focus(), 500);
+    });
+
+    card.querySelector(".edit-btn").addEventListener("click", () => {
+      card.setAttribute("data-edit", "");
+      sendTaskInfo();
     });
 
     card
       .querySelector("input[type=checkbox]")
       .addEventListener("input", changeTaskStatus);
 
+    card
+      .querySelector("input[type=checkbox]")
+      .addEventListener("input", updateCheckedValue);
+
+    function updateCheckedValue() {
+      tasks.forEach(task => {
+        if (task["_id"] === card.querySelector("input[type=checkbox]").id) {
+          task.completed = card.querySelector("input[type=checkbox]").checked;
+        }
+      });
+
+      updateStorage("tasks", tasks);
+      toogleEmptyNotification();
+    }
+
     return card;
   };
 
-  function generateId() {
-    // desired length of Id
-    const idStrLen = 25;
+  formDelete.addEventListener("submit", addNewTask);
+  formEdit.addEventListener("submit", editTask);
+  deleteBtnModal.addEventListener("click", deleteTask);
 
-    // always start with a letter -- base 36 makes for a nice shortcut
-    let idStr = (Math.floor(Math.random() * 25) + 10).toString(36);
-
-    // similar to above, complete the Id using random, alphanumeric characters
-    do {
-      idStr += Math.floor(Math.random() * 35).toString(36);
-    } while (idStr.length < idStrLen);
-
-    return idStr;
-  }
-
-  function addNewTask(event) {
-    const newTask = {
-      _id: generateId(),
-      title: this.title.value,
-      body: this.body.value,
-      completed: this.progress.checked
-    };
-
-    const card = cardTemplate(newTask);
-
-    tasks.unshift(newTask);
-    list.prepend(card);
-
-    updateStorage(tasks);
-    checkTasksLength();
-
-    event.preventDefault();
-    this.reset();
-  }
-
-  function filterTasks(event) {
-    if (event.target.contains(completedTasksBtn)) {
-      document.body.setAttribute("data-sort", "completed");
-    } else if (event.target.contains(allTasksBtn)) {
-      document.body.setAttribute("data-sort", "all");
-    }
-  }
-
-  function cancelDeleteTask() {
-    const delCard = document.querySelector("li[data-delete]");
-    delCard.removeAttribute("data-delete");
-  }
-
-  function deleteTask() {
-    const delCard = document.querySelector("li[data-delete]");
-
-    delCard.remove();
-
-    tasks = tasks.filter(
-      el => el["_id"] !== delCard.querySelector("input[type=checkbox]").id
-    );
-
-    updateStorage(tasks);
-    checkTasksLength();
-  }
-
-  function moduleKeyController(event) {
-    if (event.target.contains(cancelBtnModal)) {
-      switch (event.keyCode) {
-        case 9:
-          event.preventDefault();
-          break;
-        case 39:
-          deleteBtnModal.focus();
-          break;
-        default:
-      }
-    }
-    if (event.target.contains(deleteBtnModal)) {
-      switch (event.keyCode) {
-        case 9:
-          event.preventDefault();
-          break;
-        case 37:
-          cancelBtnModal.focus();
-          break;
-        default:
-      }
-    }
-  }
-
-  form.addEventListener("submit", addNewTask);
+  closeBtnModal.addEventListener("click", toogleTaskAction);
+  cancelDeleteBtn.addEventListener("click", toogleTaskAction);
+  modalEdit
+    .querySelectorAll(".close-modal")
+    .forEach(btn => btn.addEventListener("click", toogleTaskAction));
 
   allTasksBtn.addEventListener("click", filterTasks);
   completedTasksBtn.addEventListener("click", filterTasks);
 
-  closeBtnModal.addEventListener("click", cancelDeleteTask);
-  cancelBtnModal.addEventListener("click", cancelDeleteTask);
-  deleteBtnModal.addEventListener("click", deleteTask);
-
-  cancelBtnModal.addEventListener("keydown", moduleKeyController);
+  cancelDeleteBtn.addEventListener("keydown", moduleKeyController);
   deleteBtnModal.addEventListener("keydown", moduleKeyController);
 
   // init tasks from array
+  document.body.setAttribute(
+    "data-sort",
+    `${JSON.parse(localStorage.getItem("sortStatus")) || "all"}`
+  );
+
+  emptyListAlert.style.display =
+    JSON.parse(localStorage.getItem("emptyListVisibility")) || "none";
+
+  localStorage.setItem("tasks", JSON.stringify(tasks));
+  localStorage.setItem(
+    "sortStatus",
+    JSON.stringify(document.body.dataset.sort)
+  );
+  localStorage.setItem(
+    "emptyListVisibility",
+    JSON.stringify(emptyListAlert.style.display)
+  );
+
   tasks.forEach(el => {
     const card = cardTemplate(el);
-    list.append(card);
+
+    taskList.append(card);
   });
 })();

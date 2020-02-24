@@ -124,10 +124,7 @@ let tasks = JSON.parse(localStorage.getItem("tasks")) || [
     notificationList.prepend(notification);
 
     setTimeout(() => {
-      notification.classList.toggle("fadeOut");
-      setTimeout(() => {
-        notification.remove();
-      }, 1000);
+      $(notification).removeClass('animated').fadeOut('slow', () => notification.remove());
     }, 5000);
   }
 
@@ -154,6 +151,9 @@ let tasks = JSON.parse(localStorage.getItem("tasks")) || [
         break;
       default:
         break;
+
+        // if (!compl) return;
+        // do staff 
     }
 
     updateStorage("emptyListVisibility", emptyListAlert.style.display);
@@ -225,7 +225,10 @@ let tasks = JSON.parse(localStorage.getItem("tasks")) || [
       }
     });
 
-    $("#simulateClick").trigger("click");
+    // $("#simulateClick").trigger("click");
+
+    $('.modal').modal('hide');
+
     updateStorage("tasks", tasks);
     createNotification("edit", this.title.value);
 

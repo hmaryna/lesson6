@@ -107,24 +107,21 @@ let tasks = JSON.parse(localStorage.getItem("tasks")) || [
     );
 
     notification.innerHTML = `
-        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+      <button type="button" class="close" data-dismiss="alert" aria-label="Close">
         <span aria-hidden="true">&times;</span>
       </button>
-      ${
-  response === "add"
-    ? `The task <strong>"${title}"</strong> has been successfully added!`
-    : response === "delete"
-      ? `The task <strong>"${title}"</strong> has been successfully deleted!`
-      : response === "edit"
-        ? `The task <strong>"${title}"</strong> has been successfully edited!`
-        : "none"
-  }
+      <span>
+        The task <strong>"${title}"</strong> has been successfully ${response}ed!
+      </span>
     `;
 
     notificationList.prepend(notification);
 
     setTimeout(() => {
-      $(notification).removeClass('animated').fadeOut('slow', () => notification.remove());
+      notification.classList.toggle("fadeOut");
+      setTimeout(() => {
+        notification.remove();
+      }, 1000);
     }, 5000);
   }
 
@@ -135,25 +132,14 @@ let tasks = JSON.parse(localStorage.getItem("tasks")) || [
       emptyListAlert.style.display = "none";
     }
 
-    const { sort } = document.body.dataset;
+    updateStorage("emptyListVisibility", emptyListAlert.style.display);
+    console.log(document.body.dataset);
+    if (document.body.dataset.sort !== "completed") return;
 
-    switch (sort) {
-      case "completed":
-        if (tasks.every(task => task.completed === false)) {
-          console.log(tasks);
-          console.log(tasks.every(task => task.completed === false));
-          emptyListAlert.style.display = "block";
-        } else {
-          emptyListAlert.style.display = "none";
-        }
-        break;
-      case "all":
-        break;
-      default:
-        break;
-
-        // if (!compl) return;
-        // do staff 
+    if (tasks.every(task => task.completed === false)) {
+      emptyListAlert.style.display = "block";
+    } else {
+      emptyListAlert.style.display = "none";
     }
 
     updateStorage("emptyListVisibility", emptyListAlert.style.display);
@@ -225,10 +211,7 @@ let tasks = JSON.parse(localStorage.getItem("tasks")) || [
       }
     });
 
-    // $("#simulateClick").trigger("click");
-
-    $('.modal').modal('hide');
-
+    $("#simulateClick").trigger("click");
     updateStorage("tasks", tasks);
     createNotification("edit", this.title.value);
 
@@ -277,7 +260,7 @@ let tasks = JSON.parse(localStorage.getItem("tasks")) || [
 
     updateStorage("tasks", tasks);
     toogleEmptyNotification();
-    createNotification("delete", delCard.querySelector("span").textContent);
+    createNotification("delet", delCard.querySelector("span").textContent);
   }
 
   const cardTemplate = function(obj) {

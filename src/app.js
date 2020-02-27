@@ -367,3 +367,9 @@ let tasks = JSON.parse(localStorage.getItem("tasks")) || [
     taskList.append(card);
   });
 })();
+
+// ! todo:
+// убрать console.log и лишние комментарии
+// обьявить функции одинаково
+// переименовать функцию
+// вернуть строку вместо settimeout-ов

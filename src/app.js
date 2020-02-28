@@ -79,13 +79,9 @@ let tasks = JSON.parse(localStorage.getItem("tasks")) || [
   }
 
   function generateId() {
-    // desired length of Id
     const idStrLen = 25;
-
-    // always start with a letter -- base 36 makes for a nice shortcut
     let idStr = (Math.floor(Math.random() * 25) + 10).toString(36);
 
-    // similar to above, complete the Id using random, alphanumeric characters
     do {
       idStr += Math.floor(Math.random() * 35).toString(36);
     } while (idStr.length < idStrLen);
@@ -118,14 +114,13 @@ let tasks = JSON.parse(localStorage.getItem("tasks")) || [
     notificationList.prepend(notification);
 
     setTimeout(() => {
-      notification.classList.toggle("fadeOut");
-      setTimeout(() => {
-        notification.remove();
-      }, 1000);
+      $(notification)
+        .removeClass("animated")
+        .fadeOut("slow", () => notification.remove());
     }, 5000);
   }
 
-  function toogleEmptyNotification() {
+  function toggleEmptyNotification() {
     if (tasks.length === 0) {
       emptyListAlert.style.display = "block";
     } else {
@@ -133,7 +128,7 @@ let tasks = JSON.parse(localStorage.getItem("tasks")) || [
     }
 
     updateStorage("emptyListVisibility", emptyListAlert.style.display);
-    console.log(document.body.dataset);
+
     if (document.body.dataset.sort !== "completed") return;
 
     if (tasks.every(task => task.completed === false)) {
@@ -153,7 +148,7 @@ let tasks = JSON.parse(localStorage.getItem("tasks")) || [
     }
 
     updateStorage("sortStatus", document.body.dataset.sort);
-    toogleEmptyNotification();
+    toggleEmptyNotification();
   }
 
   function changeTaskStatus(event) {
@@ -166,7 +161,7 @@ let tasks = JSON.parse(localStorage.getItem("tasks")) || [
     }
   }
 
-  function toogleTaskAction(event) {
+  function toggleTaskAction(event) {
     const card =
       document.querySelector("li[data-edit]") ||
       document.querySelector("li[data-delete]");
@@ -183,41 +178,6 @@ let tasks = JSON.parse(localStorage.getItem("tasks")) || [
     }
   }
 
-  function editTask(event) {
-    event.preventDefault();
-
-    const editCard = document.querySelector("li[data-edit]");
-    const newInfo = {
-      _id: editCard.querySelector("input[type=checkbox]").id,
-      completed: this.progress.checked,
-      title: this.title.value,
-      body: this.body.value
-    };
-
-    editCard.querySelector("span").textContent = newInfo.title;
-    editCard.querySelector("p").textContent = newInfo.body;
-    editCard.querySelector("input[type=checkbox]").checked = newInfo.completed;
-
-    editCard.dataset.taskStatus =
-      newInfo.completed === true ? "done" : "inprogress";
-
-    editCard.removeAttribute("data-edit");
-
-    tasks.forEach(el => {
-      if (el["_id"] === newInfo["_id"]) {
-        for (const key of Object.keys(el)) {
-          el[key] = newInfo[key];
-        }
-      }
-    });
-
-    $("#simulateClick").trigger("click");
-    updateStorage("tasks", tasks);
-    createNotification("edit", this.title.value);
-
-    event.target.reset();
-  }
-
   function sendTaskInfo() {
     const editCard = document.querySelector("li[data-edit]");
 
@@ -228,43 +188,19 @@ let tasks = JSON.parse(localStorage.getItem("tasks")) || [
     ).checked;
   }
 
-  function addNewTask(event) {
-    const newTask = {
-      _id: generateId(),
-      completed: this.progress.checked,
-      title: this.title.value,
-      body: this.body.value
-    };
-
-    const card = cardTemplate(newTask);
-
-    tasks.unshift(newTask);
-    taskList.prepend(card);
-
-    updateStorage("tasks", tasks);
-    toogleEmptyNotification();
-    createNotification("add", this.title.value);
-
-    event.preventDefault();
-    this.reset();
-  }
-
-  function deleteTask() {
-    const delCard = document.querySelector("li[data-delete]");
-
-    delCard.remove();
-
-    tasks = tasks.filter(
-      el => el["_id"] !== delCard.querySelector("input[type=checkbox]").id
-    );
-
-    updateStorage("tasks", tasks);
-    toogleEmptyNotification();
-    createNotification("delet", delCard.querySelector("span").textContent);
-  }
-
-  const cardTemplate = function(obj) {
+  function cardTemplate(obj) {
     const card = document.createElement("li");
+
+    function updateCheckedValue() {
+      tasks.forEach(task => {
+        if (task["_id"] === card.querySelector("input[type=checkbox]").id) {
+          task.completed = card.querySelector("input[type=checkbox]").checked;
+        }
+      });
+
+      updateStorage("tasks", tasks);
+      toggleEmptyNotification();
+    }
 
     card.classList.add(
       "list-group-item",
@@ -312,29 +248,89 @@ let tasks = JSON.parse(localStorage.getItem("tasks")) || [
       .querySelector("input[type=checkbox]")
       .addEventListener("input", updateCheckedValue);
 
-    function updateCheckedValue() {
-      tasks.forEach(task => {
-        if (task["_id"] === card.querySelector("input[type=checkbox]").id) {
-          task.completed = card.querySelector("input[type=checkbox]").checked;
-        }
-      });
-
-      updateStorage("tasks", tasks);
-      toogleEmptyNotification();
-    }
-
     return card;
-  };
+  }
+
+  function editTask(event) {
+    event.preventDefault();
+
+    const editCard = document.querySelector("li[data-edit]");
+    const newInfo = {
+      _id: editCard.querySelector("input[type=checkbox]").id,
+      completed: this.progress.checked,
+      title: this.title.value,
+      body: this.body.value
+    };
+
+    editCard.querySelector("span").textContent = newInfo.title;
+    editCard.querySelector("p").textContent = newInfo.body;
+    editCard.querySelector("input[type=checkbox]").checked = newInfo.completed;
+
+    editCard.dataset.taskStatus =
+      newInfo.completed === true ? "done" : "inprogress";
+
+    editCard.removeAttribute("data-edit");
+
+    tasks.forEach(el => {
+      if (el["_id"] === newInfo["_id"]) {
+        for (const key of Object.keys(el)) {
+          el[key] = newInfo[key];
+        }
+      }
+    });
+
+    $("#simulateClick").trigger("click");
+    updateStorage("tasks", tasks);
+    toggleEmptyNotification();
+    createNotification("edit", this.title.value);
+
+    event.target.reset();
+  }
+
+  function addNewTask(event) {
+    const newTask = {
+      _id: generateId(),
+      completed: this.progress.checked,
+      title: this.title.value,
+      body: this.body.value
+    };
+
+    const card = cardTemplate(newTask);
+
+    tasks.unshift(newTask);
+    taskList.prepend(card);
+
+    updateStorage("tasks", tasks);
+    toggleEmptyNotification();
+    createNotification("add", this.title.value);
+
+    event.preventDefault();
+    this.reset();
+  }
+
+  function deleteTask() {
+    const delCard = document.querySelector("li[data-delete]");
+
+    delCard.remove();
+
+    tasks = tasks.filter(
+      el => el["_id"] !== delCard.querySelector("input[type=checkbox]").id
+    );
+
+    updateStorage("tasks", tasks);
+    toggleEmptyNotification();
+    createNotification("delet", delCard.querySelector("span").textContent);
+  }
 
   formDelete.addEventListener("submit", addNewTask);
   formEdit.addEventListener("submit", editTask);
   deleteBtnModal.addEventListener("click", deleteTask);
 
-  closeBtnModal.addEventListener("click", toogleTaskAction);
-  cancelDeleteBtn.addEventListener("click", toogleTaskAction);
+  closeBtnModal.addEventListener("click", toggleTaskAction);
+  cancelDeleteBtn.addEventListener("click", toggleTaskAction);
   modalEdit
     .querySelectorAll(".close-modal")
-    .forEach(btn => btn.addEventListener("click", toogleTaskAction));
+    .forEach(btn => btn.addEventListener("click", toggleTaskAction));
 
   allTasksBtn.addEventListener("click", filterTasks);
   completedTasksBtn.addEventListener("click", filterTasks);
@@ -367,9 +363,3 @@ let tasks = JSON.parse(localStorage.getItem("tasks")) || [
     taskList.append(card);
   });
 })();
-
-// ! todo:
-// убрать console.log и лишние комментарии
-// обьявить функции одинаково
-// переименовать функцию
-// вернуть строку вместо settimeout-ов

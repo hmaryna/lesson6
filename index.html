@@ -10,10 +10,28 @@
       integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T"
       crossorigin="anonymous"
     />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.7.2/animate.min.css">
     <title>Todo List</title>
+    <style>
+      .list-group-item[data-task-status="done"] {
+        background: #2cb52c26;
+      }
+      body[data-sort="completed"] .list-group-item[data-task-status="inprogress"] {
+        display: none!important;
+      }
+      .notify-wrapper {
+        display: inline-block;
+        margin: 0px auto;
+        position: fixed;
+        z-index: 1031;
+        top: 10px;
+        left: 0px;
+        right: 0px;
+      }
+    </style>
   </head>
   <body>
-    <div class="form-section mt-5">
+    <div class="form-section mt-5 pt-4">
       <div class="container">
         <div class="row">
           <div class="col col-8 mx-auto">
@@ -21,28 +39,37 @@
               <div class="card-body">
                 <h5 class="card-title">Add new task</h5>
                 <form name="addTask">
-                  <input
-                    type="text"
-                    name="title"
-                    id="title"
-                    class="form-control"
-                    placeholder="Task title"
-                  />
-                  <input
-                    type="text"
-                    name="body"
-                    id="body"
-                    class="form-control mt-3"
-                    placeholder="Task body"
-                  />
                   <div class="form-group">
-                    <label for="completed">Completed</label>
                     <input
-                    type="checkbox"
-                    name="completed"
-                    id="completed"
-                    class="mt-3 mr-2"
-                  />
+                      type="text"
+                      name="title"
+                      id="title"
+                      class="form-control"
+                      placeholder="Task title"
+                      required
+                    />
+                    <input
+                      type="text"
+                      name="body"
+                      id="body"
+                      class="form-control mt-3"
+                      placeholder="Task body"
+                      required
+                    />
+                  </div>
+                  <div class="form-group">
+                    <div class="custom-control custom-checkbox">
+                      <input
+                        type="checkbox"
+                        name="progress"
+                        class="mt-3 mr-2 custom-control-input"
+                        id="completed">
+                      <label
+                        class="custom-control-label"
+                        for="completed">
+                          Completed
+                      </label>
+                    </div>
                   </div>
                   <button type="submit" class="btn btn-primary mt-4">
                     Add task
@@ -54,22 +81,84 @@
         </div>
       </div>
     </div>
-    <div class="tasks-list-section mt-5">
+    <div class="tasks-list-section mt-5 mb-5">
       <div class="container">
+        <button type="button" id="showAll" class="btn btn-primary">All</button>
+        <button type="button" id="showCompleted" class="btn btn-primary">Completed</button>
         <ul class="list-group">
-          <li class="list-group-item d-flex align-items-center flex-wrap mt-2">
-            <span>My title</span>
-            <button class="btn btn-danger ml-auto delete-btn">Delete</button>
-            <p class="mt-2 w-100">
-              Lorem ipsum dolor sit amet consectetur adipisicing elit. Eligendi
-              soluta vitae sint tenetur quam quisquam explicabo quos? Aut iste
-              ut laborum iure aspernatur, nam ea quibusdam rerum minus magnam
-              dignissimos.
-            </p>
-          </li>
         </ul>
+        <div class="alert alert-warning mt-2 empty-list-aler" role="alert">List with defined tasks is empty now. Please, add new task.</div>
       </div>
     </div>
+    <!-- Modal Delete -->
+    <div class="modal fade in" id="modalDelete" role="dialog" aria-labelledby="exampleModalCenterTitle">
+      <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="exampleModalLongTitle">Do you really want to delete this task?</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <p>If you delete this task it will not be possible to restore it.</p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            <button type="button" class="btn btn-danger" data-dismiss="modal">Delete Task</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Modal Edit -->
+    <div class="modal fade" id="modalEdit" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" aria-hidden="true" >
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="exampleModalLabel">Edit Task</h5>
+            <button type="button" class="close close-modal" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <form name="editTask">
+              <div class="form-group">
+                <input
+                  type="text"
+                  name="title"
+                  class="form-control"
+                  placeholder="Task title"
+                />
+                <input
+                  type="text"
+                  name="body"
+                  class="form-control mt-3"
+                  placeholder="Task body"
+                />
+              </div>
+              <div class="form-group">
+                <div class="custom-control custom-checkbox">
+                  <input
+                    type="checkbox"
+                    name="progress"
+                    class="mt-3 mr-2 custom-control-input"
+                    id="completedEdit">
+                  <label class="custom-control-label" for="completedEdit"> Completed</label>
+                </div>
+              </div>
+              <button type="submit" name="edit" class="btn btn-primary">Submit</button>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary close-modal" data-dismiss="modal" id="simulateClick">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="notify-wrapper col-10 col-md-6 col-lg-4"></div>
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
     <script src="./src/app.js"></script>
   </body>
 </html>
